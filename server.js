@@ -7,7 +7,7 @@ var LRU = require("lru-cache")
   , options = { max: 100000
 			  , length: function (key, n) { return fs.statSync(key)['size']/1000000.0}
 			  , dispose: function (key, n) { console.log('dispose',n,fs.statSync(n)); fs.statSync(n) && fs.unlink(n);  }
-              , maxAge: 1000 * 60 } // 1 minute
+              , maxAge: 1000 * 60 * 60} // 1 Hour
   , cache = LRU(options);
 
 var AWS = require('aws-sdk');
