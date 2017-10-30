@@ -24,7 +24,7 @@ AWS.config.update({
 	});
 var s3 = new AWS.S3();
 var port = 3000;
-
+// GET PNG FROM Z, X, Y 
 app.get('/:z/:x/:y.*', function(req, res){
 	function zeroPad(num, numZeros) {
 		var zeros = Math.max(0, numZeros - num.toString().length);
@@ -35,6 +35,7 @@ app.get('/:z/:x/:y.*', function(req, res){
 	var level = req.param('z');
 	var col = req.param('x');
 	var row = req.param('y');
+	console.log('Level - ' + level + ' Col - ' + col + ' row - ' + row);
 	var colVal = (parseInt(col / 128)) * 128;
 	var rowVal = (parseInt(row / 128)) * 128;
 	var colName = zeroPad(colVal.toString(16), 4);
@@ -43,7 +44,9 @@ app.get('/:z/:x/:y.*', function(req, res){
 	mbtfile = '/R' + rowName + 'C' + colName;
 	var temp = '/home/ubuntu/mbtcache/L' + level; // TEMP FOLDER CREATED FOR CACHE IN EC2
 	var tempFile = temp + mbtfile + '.mbtiles';
-		if ((fs.existsSync(tempFile)) && (fs.statSync(tempFile)['size'] != 0)){
+	
+	// IF FILE EXISTS IN CACHE FOLDER & SIZE NOT 0, CACHE IT AND FETCH PNG TILE. ELSE COPY IT FROM AWS S3 
+	if ((fs.existsSync(tempFile)) && (fs.statSync(tempFile)['size'] != 0)){
 		var mbt = cache.get(mbtfile);
 		if(mbt){
 			cache.get(mbtfile);
@@ -56,12 +59,14 @@ app.get('/:z/:x/:y.*', function(req, res){
 		});
 		return;
 	} else {
+		// CHECK IF LEVEL DIR EXISTS, IF NOT CREATE ONE
 		if (!fs.existsSync(temp)){
 			fs.mkdirSync(temp);
 		}
 		key = 'mbt/L' + level + mbtfile + '.mbtiles';
 		var file = require('fs').createWriteStream(tempFile);
 		stream = s3.getObject({Bucket: 'msd-1', Key: key}).createReadStream().pipe(file);
+		// WAIT FOR FILE TO BE COPIED TO CACHE LOCATION, THEN FETCH TILES 
 		stream.on('finish', function(){
 			getTile(tempFile, function(err, tile){
 				res.header("Content-Type", "image/png");
@@ -70,6 +75,7 @@ app.get('/:z/:x/:y.*', function(req, res){
 		});
 		return;	
 	}
+	// FUNCTION TO GET PNG TILES FROM MBTILES USING @mapbox/mbtiles NPM MODULE
 	function getTile(mbtilesLocation){
 		new MBTiles(mbtilesLocation, function(err, mbtiles){
 			var extension = req.param(0);
@@ -106,3 +112,4 @@ app.get('/:z/:x/:y.*', function(req, res){
 });
 // actually create the server
 app.listen(port);
+console.log('Listening on port ', port);
