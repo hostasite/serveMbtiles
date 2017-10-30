@@ -2,4 +2,4 @@
 
 ## Command to start the server
 
-  node server.js [AWS accessKeyId] [AWS secretAccessKey]
+  'node server.js [AWS accessKeyId] [AWS secretAccessKey]'
