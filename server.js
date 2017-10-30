@@ -42,7 +42,7 @@ app.get('/:z/:x/:y.*', function(req, res){
 	var rowName = zeroPad(rowVal.toString(16), 4);
 	var levelName = zeroPad(level.toString(10), 2);
 	mbtfile = '/R' + rowName + 'C' + colName;
-	var temp = '/home/ubuntu/mbtcache/L' + level; // TEMP FOLDER CREATED FOR CACHE IN EC2
+	var temp = '/home/ubuntu/mbtcache' + '/L' + level; // TEMP FOLDER CREATED FOR CACHE IN EC2, MODIFY (/home/ubuntu/mbtcache) PATH WHERE LEVELS EXISTS
 	var tempFile = temp + mbtfile + '.mbtiles';
 	
 	// IF FILE EXISTS IN CACHE FOLDER & SIZE NOT 0, CACHE IT AND FETCH PNG TILE. ELSE COPY IT FROM AWS S3 
@@ -63,9 +63,9 @@ app.get('/:z/:x/:y.*', function(req, res){
 		if (!fs.existsSync(temp)){
 			fs.mkdirSync(temp);
 		}
-		key = 'mbt/L' + level + mbtfile + '.mbtiles';
+		key = 'mbt' + '/L' + level + mbtfile + '.mbtiles'; // MODIFY mbt, - PATH INSIDE S3 BUCKET TO WHERE LEVELS EXISTS
 		var file = require('fs').createWriteStream(tempFile);
-		stream = s3.getObject({Bucket: 'msd-1', Key: key}).createReadStream().pipe(file);
+		stream = s3.getObject({Bucket: 'msd-1', Key: key}).createReadStream().pipe(file); // MODIFY msd-1 TO BUCKET NAME
 		// WAIT FOR FILE TO BE COPIED TO CACHE LOCATION, THEN FETCH TILES 
 		stream.on('finish', function(){
 			getTile(tempFile, function(err, tile){
